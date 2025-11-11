@@ -97,7 +97,18 @@ def is_coord_valid(coord: str) -> bool:
 
 
 class Position:
-    """Holds all information to set up a chess position, like FEN."""
+    """Holds all information in a chess position.
+
+    https://www.chessprogramming.org/Chess_Position
+
+    Similar to FEN:
+    - Piece placement
+    - Side to move
+    - Castling rights
+    - EP target square
+    - Halfmove clock
+    - Fullmove counter
+    """
 
     def __init__(self, fen):
         """Constructs a Position from a given FEN string."""
@@ -110,20 +121,6 @@ class Position:
         assert len(fen_split) == 6
         
         piece_place = fen_split[0]  # board string
-
-        self.black_move = fen_split[1] == 'b'
-        assert fen_split[1] in "wb"
-
-        self.castling = fen_split[2]
-
-        self.ep_target = fen_split[3]
-
-        assert (self.ep_target == '-' or 
-            (is_coord_valid(self.ep_target) and self.ep_target[1] in "36"))
-
-        self.halfmove = int(fen_split[4])
-
-        self.fullmove = int(fen_split[5])
 
         # Parse piece placement string
         place_rank = piece_place.split('/')
@@ -155,6 +152,25 @@ class Position:
 
             if file != 8:
                 raise ValueError("Incorrect rank placement")
+
+        # Parse the rest
+        self.black_move = fen_split[1] == 'b'
+        assert fen_split[1] in "wb"
+
+        self.castling = fen_split[2]
+
+        ep_target_raw = fen_split[3]
+
+        if ep_target_raw == '-':
+            self.ep_target = None
+        elif is_coord_valid(ep_target_raw) and ep_target_raw[1] in "36":
+            self.ep_target = sq_from_coord(ep_target_raw)
+        else:
+            raise ValueError("Invalid EP target")
+
+
+        self.halfmove = int(fen_split[4])
+        self.fullmove = int(fen_split[5])
 
 
 
