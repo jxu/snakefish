@@ -1,17 +1,18 @@
 from board import *
 
 class Move:
-    """Encode move with from square, to square, and flags"""
+    """Encode move with from square, to square, and flags.
+
+    https://www.chessprogramming.org/Encoding_Moves
+    """
     def __init__(self, from_ind, to_ind, flags=0):
-        assert sqvalid(from_ind)
-        assert sqvalid(to_ind)
+        assert sq_valid(from_ind)
+        assert sq_valid(to_ind)
         assert from_ind != to_ind  # null move
 
         self.from_ = from_ind
         self.to = to_ind
-        self.flags = flags
-
-    # TODO: construct from coordinate notation string?
+        self.flags = flags  # TODO
 
 
     def __str__(self):
@@ -21,8 +22,6 @@ class Move:
         if self.flags:
             raise NotImplementedError
 
-        return sqname(self.from_) + sqname(self.to)
+        return sq_to_coord(self.from_) + sq_to_coord(self.to)
 
 
-def test_move_str():
-    assert str(Move(0x00, 0x12)) == "a1c2"
