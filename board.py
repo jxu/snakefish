@@ -47,7 +47,7 @@ PIECE_MAP = {
     'K': KING
 }
 
-def is_piece_black(piece):
+def is_black(piece):
     # treats 0 as not black
     return piece < 0
 
@@ -128,12 +128,12 @@ class Position:
             raise ValueError("Not 8 ranks")
 
         for i in range(8):
-            rank = 7 - i
-            file = 0
+            row = 7 - i
+            col = 0
 
             for c in place_rank[i]:
                 if c.isdigit():
-                    file += int(c)  # skip c spaces
+                    col += int(c)  # skip c spaces
                 else:
                     is_black = c.islower()
                     c = c.upper()  # reduce piece checking cases
@@ -146,12 +146,12 @@ class Position:
                     # set negative if black
                     if is_black:
                         piece = -piece
-                    self.board[sq_index(rank, file)] = piece
+                    self.board[sq_index(row, col)] = piece
 
-                    file += 1
+                    col += 1
 
-            if file != 8:
-                raise ValueError("Incorrect rank placement")
+            if col != 8:
+                raise ValueError("Incorrect lengh row")
 
         # Parse the rest
         self.black_move = fen_split[1] == 'b'
