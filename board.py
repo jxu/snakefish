@@ -157,6 +157,7 @@ class Position:
         self.black_move = fen_split[1] == 'b'
         assert fen_split[1] in "wb"
 
+        # TODO: turn castling into flags
         self.castling = fen_split[2]
 
         ep_target_raw = fen_split[3]
