@@ -28,7 +28,8 @@ Square Coordinates are file-rank combo like h8
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
-# Piece definitions (negative for black)
+# Piece enum
+# positive for white, negative for black, zero for empty
 EMPTY   = 0
 PAWN    = 1
 KNIGHT  = 2
@@ -36,6 +37,11 @@ BISHOP  = 3
 ROOK    = 4
 QUEEN   = 5
 KING    = 6
+
+# Extra color enum when considered indepedently
+BLACK   = -1
+NEUTRAL = 0
+WHITE   = 1
 
 
 PIECE_MAP = {
@@ -47,9 +53,11 @@ PIECE_MAP = {
     'K': KING
 }
 
-def is_black(piece):
-    # treats 0 as not black
-    return piece < 0
+def get_color(piece):
+    if piece > 0: return WHITE
+    if piece < 0: return BLACK
+    return NEUTRAL
+
 
 # 0x88 board coordinate transformations
 
@@ -87,7 +95,9 @@ def sq_from_coord(coord: str) -> int:
     col = ord(coord[0]) - ord('a')
     row = ord(coord[1]) - ord('1')
     return sq_index(row, col)
-    
+   
+# shortcut function
+SQ = sq_from_coord
 
 def is_coord_valid(coord: str) -> bool:
     """Check if a string is a valid algebraic coordinate."""

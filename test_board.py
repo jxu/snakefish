@@ -1,9 +1,9 @@
 from board import *
 
-def test_is_black():
-    assert is_black(-KING)
-    assert not is_black(KNIGHT)
-    assert not is_black(EMPTY)
+def test_get_color():
+    assert get_color(-KING) == BLACK
+    assert get_color(KNIGHT) == WHITE
+    assert get_color(EMPTY) == NEUTRAL
 
 def test_sq_index():
     assert sq_index(1, 2) == 0x12
