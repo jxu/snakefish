@@ -46,7 +46,10 @@ def test_position():
     BOARD = [
         [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK],
         [PAWN]*8,
-        *[[EMPTY]*8 for _ in range(4)],  # independent rows
+        [EMPTY]*8,
+        [EMPTY]*8,
+        [EMPTY]*8,
+        [EMPTY]*8,
         [-PAWN,]*8,
         [-ROOK,-KNIGHT,-BISHOP,-QUEEN,-KING,-BISHOP,-KNIGHT,-ROOK],
     ]
@@ -56,7 +59,7 @@ def test_position():
             assert start_pos.board[sq_index(r, c)] == BOARD[r][c]
 
     assert start_pos.black_move == False
-    assert start_pos.castling == "KQkq"
+    assert start_pos.castling == 0xf
     assert start_pos.ep_target == None
     assert start_pos.halfmove == 0
     assert start_pos.fullmove == 1
@@ -76,7 +79,7 @@ def test_position():
 
 
     assert pos1.black_move == True
-    assert pos1.castling == "KQkq"
+    assert pos1.castling == 0xf
     assert pos1.ep_target == sq_from_coord("e3")
     assert pos1.halfmove == 0
     assert pos1.fullmove == 1

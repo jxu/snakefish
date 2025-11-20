@@ -25,11 +25,8 @@ Uses an int instead of object for efficiency
 Square Coordinates are file-rank combo like h8
 """
 
-START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-
-# Piece enum
-# positive for white, negative for black, zero for empty
+# Piece type (positive for white, negative for black)
 EMPTY   = 0
 PAWN    = 1
 KNIGHT  = 2
@@ -38,11 +35,6 @@ ROOK    = 4
 QUEEN   = 5
 KING    = 6
 
-# Extra color enum when considered indepedently
-BLACK   = -1
-NEUTRAL = 0
-WHITE   = 1
-
 
 PIECE_MAP = {
     'P': PAWN,
@@ -50,8 +42,27 @@ PIECE_MAP = {
     'B': BISHOP,
     'R': ROOK,
     'Q': QUEEN,
-    'K': KING
+    'K': KING,
 }
+
+# color enum
+BLACK = -1
+WHITE = 1
+NEUTRAL = 0
+
+# castling flags
+CASTLE_WK = 1
+CASTLE_WQ = 2
+CASTLE_BK = 4
+CASTLE_BQ = 8
+
+CASTLE_MAP = {
+    'K': CASTLE_WK,
+    'Q': CASTLE_WQ,
+    'k': CASTLE_BK,
+    'q': CASTLE_BQ,
+}
+
 
 def get_color(piece):
     if piece > 0: return WHITE
@@ -127,8 +138,8 @@ class Position:
 
         fen_split = fen.split()
 
-        # TODO: turn asserts into proper error handling
-        assert len(fen_split) == 6
+        if len(fen_split) != 6:
+            raise ValueError("Wrong number of FEN fields")
         
         piece_place = fen_split[0]  # board string
 
@@ -164,12 +175,21 @@ class Position:
                 raise ValueError("Incorrect lengh row")
 
         # Parse the rest
+        # Side to move
+        if fen_split[1] not in ('w', 'b'):
+            raise ValueError("Black move")
         self.black_move = fen_split[1] == 'b'
-        assert fen_split[1] in "wb"
 
-        # TODO: turn castling into flags
-        self.castling = fen_split[2]
+        # Castling rights
+        self.castling = 0
+        castling = fen_split[2]
+        if castling == '-':
+            self.castling = 0
+        else:
+            for c in castling:
+                self.castling |= CASTLE_MAP[c]  
 
+        # EP target
         ep_target_raw = fen_split[3]
 
         if ep_target_raw == '-':
@@ -179,9 +199,9 @@ class Position:
         else:
             raise ValueError("Invalid EP target")
 
-
+        # Half move and full move counters
         self.halfmove = int(fen_split[4])
         self.fullmove = int(fen_split[5])
 
 
-
+START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
