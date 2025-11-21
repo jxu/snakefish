@@ -10,11 +10,15 @@ SE = SS + EE
 SW = SS + WW
 NW = NN + WW
 
-def generate_rook_moves(pos: Position, sq: int) -> Iterator[Move]:
-    """Generate pseudo-legal rook moves from pos and board"""
+DIRECTION_ROOK = (NN, EE, SS, WW)
+DIRECTION_BISHOP = (NE, SE, SW, NW)
+DIRECTION_QUEEN = DIRECTION_ROOK + DIRECTION_BISHOP
+
+def generate_slider(directions: tuple, pos: Position, sq: int) -> Iterator[Move]:
+    """Generate pseudo-legal slider moves from starting pos and board"""
     orig_sq = sq
     
-    for direction in (NN, EE, SS, WW):
+    for direction in directions:
         sq = orig_sq + direction  # start with one step already
         while sq_valid(sq):
             move = Move(orig_sq, sq)
