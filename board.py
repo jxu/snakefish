@@ -69,6 +69,8 @@ def get_color(piece):
     if piece < 0: return BLACK
     return NEUTRAL
 
+def get_type(piece):
+    return abs(piece)
 
 # 0x88 board coordinate transformations
 

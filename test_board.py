@@ -5,6 +5,12 @@ def test_get_color():
     assert get_color(KNIGHT) == WHITE
     assert get_color(EMPTY) == NEUTRAL
 
+
+def test_get_type():
+    assert get_type(-KING) == KING
+    assert get_type(KNIGHT) == KNIGHT
+
+
 def test_sq_index():
     assert sq_index(1, 2) == 0x12
 
