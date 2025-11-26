@@ -14,9 +14,11 @@ DIRECTION_ROOK = (NN, EE, SS, WW)
 DIRECTION_BISHOP = (NE, SE, SW, NW)
 DIRECTION_QUEEN = DIRECTION_ROOK + DIRECTION_BISHOP
 
-def generate_slider(directions: tuple, pos: Position, sq: int) -> Iterator[Move]:
+DIRECTION_KING = DIRECTION_QUEEN
+DIRECTION_KNIGHT = (NN+NE, NN+NW, EE+NE, EE+SE, SS+SE, SS+SW, WW+SW, WW+NW)
+
+def generate_slider(directions: tuple, pos: Position, orig_sq: int) -> Iterator[Move]:
     """Generate pseudo-legal slider moves from starting pos and board"""
-    orig_sq = sq
     
     for direction in directions:
         sq = orig_sq + direction  # start with one step already
@@ -33,3 +35,17 @@ def generate_slider(directions: tuple, pos: Position, sq: int) -> Iterator[Move]
                 yield move
                 break
 
+def generate_stepper(directions, pos, orig_sq):
+    """Generate psuedo-legal moves for pieces that have fixed movement"""
+    
+    piece_type = get_type(pos.board[orig_sq])
+    assert piece_type in (KING, KNIGHT)
+
+    for direction in directions:
+        sq = orig_sq + direction
+        if sq_valid(sq):
+            move = Move(orig_sq, sq)
+            if pos.board[sq] == EMPTY:
+                yield move
+            elif get_color(pos.board[sq]) != get_color(pos.board[orig_sq]):
+                yield move

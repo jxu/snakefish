@@ -38,3 +38,16 @@ def test_queen():
     pos = Position("8/8/8/3Q4/8/8/8/8 w - - 0 1")
     moves = generate_slider(DIRECTION_QUEEN, pos, SQ("d5"))
     assert len(list(moves)) == 27
+
+def test_king_step():
+    pos = Position("8/8/8/3K4/6k1/8/8/8 w - - 0 1")
+    moves = generate_stepper(DIRECTION_KING, pos, SQ("d5"))
+    assert (moves_as_str(moves) ==
+            ['d5c4', 'd5c5', 'd5c6', 'd5d4', 'd5d6', 'd5e4', 'd5e5', 'd5e6'])
+    # didn't include CASTLING!
+    
+def test_knight():
+    pos = Position("8/8/8/3N4/8/8/8/8 w - - 0 1")
+    moves = generate_stepper(DIRECTION_KNIGHT, pos, SQ("d5"))
+    assert (moves_as_str(moves) == 
+        ['d5b4', 'd5b6', 'd5c3', 'd5c7', 'd5e3', 'd5e7', 'd5f4', 'd5f6'])
