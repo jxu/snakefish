@@ -51,3 +51,24 @@ def test_knight():
     moves = generate_stepper(DIRECTION_KNIGHT, pos, SQ("d5"))
     assert (moves_as_str(moves) == 
         ['d5b4', 'd5b6', 'd5c3', 'd5c7', 'd5e3', 'd5e7', 'd5f4', 'd5f6'])
+
+
+def test_pawn():
+    pos = Position("1k3b2/6P1/8/4pPpP/3p4/1P2N3/1PPP4/1K6 w - e6 0 1")
+    assert moves_as_str(generate_pawn(pos, SQ("c2"))) == ["c2c3", "c2c4"]
+    assert moves_as_str(generate_pawn(pos, SQ("b2"))) == []
+
+
+    assert moves_as_str(generate_pawn(pos, SQ("d2"))) == ["d2d3"]
+    # e.p.
+    assert moves_as_str(generate_pawn(pos, SQ("f5"))) == ["f5e6", "f5f6"]
+    assert moves_as_str(generate_pawn(pos, SQ("h5"))) == ["h5h6"]
+
+
+    # promotions
+    assert moves_as_str(generate_pawn(pos, SQ("g7"))) == \
+        ["g7f8b", "g7f8n", "g7f8q", "g7f8r",
+    "g7g8b", "g7g8n", "g7g8q", "g7g8r"]
+         
+    # black pawn
+    assert moves_as_str(generate_pawn(pos, SQ("d4"))) == ["d4d3", "d4e3"]
