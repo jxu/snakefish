@@ -150,7 +150,7 @@ class Position:
         """Generate psuedo-legal pawn movement"""
         piece = self.board[sq]
         assert get_type(piece) == PAWN
-        assert sq_row(sq) not in (0, 7)  # illegal pawn selfition
+        assert sq_row(sq) not in (0, 7)  # illegal pawn position
 
         # handle both colors at once
         to_sqs = []
@@ -159,21 +159,21 @@ class Position:
         capture_dirs = (NE, NW) if get_color(piece) == WHITE else (SE, SW)
         home_row = 1 if get_color(piece) == WHITE else 6
        
-        # try single step, including selfsible promotion
+        # try single step, including possible promotion
         step_sq = sq + direction
         # sq_valid test not needed because pawn can't be in rows 0 or 7
         if self.board[step_sq] == EMPTY:
             to_sqs.append(step_sq)
 
 
-        # try double step if selfsible
+        # try double step if possible
         if sq_row(sq) == home_row:
             step2_sq = step_sq + direction
             # both squares in front must be empty
             if self.board[step_sq] == EMPTY and self.board[step2_sq] == EMPTY:
                 to_sqs.append(step2_sq)
 
-        # try capture (including en passant, based on selfition's target ep square)
+        # try capture (including en passant, based on position's target ep square)
         for dir in capture_dirs:
             capture_sq = sq + dir
             if sq_valid(capture_sq):
@@ -182,7 +182,7 @@ class Position:
                         capture_sq == self.ep_target):
                     to_sqs.append(capture_sq)
 
-        # Generate moves, selfsibly with promotions
+        # Generate moves, possibly with promotions
         for to_sq in to_sqs:
             if sq_row(to_sq) in (0, 7):
                 for promo in (KNIGHT, BISHOP, ROOK, QUEEN):
@@ -191,7 +191,39 @@ class Position:
                 yield Move(sq, to_sq)
 
 
-    def is_attacked(self, sq, color):
-        """Determine if square (selfsibly empty) is attacked by piece with given color"""
+    def generate_attacks(self, sq):
+        """Generate all attacks from piece on sq (doesn't include castling)
+        (currently include EP)
+        """
+        piece = self.board[sq]
+        piece_type = get_type(piece)
 
+        # TODO: refactor and simplify this
+        if piece_type == PAWN:
+            yield from self.generate_pawn(sq)
+        elif piece_type == KNIGHT:
+            yield from self.generate_stepper(DIRECTION_KNIGHT, sq)
+        elif piece_type == BISHOP:
+            yield from self.generate_slider(DIRECTION_BISHOP, sq)
+        elif piece_type == ROOK:
+            yield from self.generate_slider(DIRECTION_ROOK, sq)
+        elif piece_type == QUEEN:
+            yield from self.generate_slider(DIRECTION_QUEEN, sq)
+        elif piece_type == KING:
+            yield from self.generate_stepper(DIRECTION_KING, sq)
+
+
+    def is_attacked(self, sq, attacker_color):
+        """Determine if square (possibly empty) is attacked by piece with given color"""
+        
+        for i in range(BOARD_SIZE):
+            if not sq_valid(i): continue
+
+            if get_color(self.board[i]) == attacker_color:
+                attacks = self.generate_attacks(i)
+                for move in attacks:
+                    pass 
+
+        return False
+                
 

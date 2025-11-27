@@ -25,6 +25,7 @@ Uses an int instead of object for efficiency
 Square Coordinates are file-rank combo like h8
 """
 
+BOARD_SIZE = 128
 
 # Piece type (positive for white, negative for black)
 EMPTY   = 0
