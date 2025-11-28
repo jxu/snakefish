@@ -16,12 +16,13 @@ SE = SS + EE
 SW = SS + WW
 NW = NN + WW
 
-DIRECTION_ROOK = (NN, EE, SS, WW)
-DIRECTION_BISHOP = (NE, SE, SW, NW)
-DIRECTION_QUEEN = DIRECTION_ROOK + DIRECTION_BISHOP
-
-DIRECTION_KING = DIRECTION_QUEEN
-DIRECTION_KNIGHT = (NN+NE, NN+NW, EE+NE, EE+SE, SS+SE, SS+SW, WW+SW, WW+NW)
+DIRECTIONS = {
+    ROOK: (NN, EE, SS, WW),
+    BISHOP: (NE, SE, SW, NW),
+    KNIGHT: (NN+NE, NN+NW, EE+NE, EE+SE, SS+SE, SS+SW, WW+SW, WW+NW)
+}
+DIRECTIONS[QUEEN] = DIRECTIONS[ROOK] + DIRECTIONS[BISHOP]
+DIRECTIONS[KING] = DIRECTIONS[QUEEN]
 
 
 class Position:
@@ -112,8 +113,31 @@ class Position:
         self.halfmove = int(fen_split[4])
         self.fullmove = int(fen_split[5])
 
-    def generate_slider(self, directions: tuple, orig_sq: int) -> Iterator[Move]:
-        """Generate pseudo-legal slider moves from starting pos and board"""
+
+
+    def generate_attacks(self, orig_sq: int) -> Iterator[Move]:
+        """Generate pseudo-legal piece moves from the position's board
+
+        Detect the piece from given square.
+
+        Includes sliders (rook, bishop, queen) and steppers (king without castling, knight)
+
+        castling handled separately
+        """
+        
+        piece = self.board[orig_sq]
+        piece_type = get_type(piece)
+        assert piece_type != EMPTY
+
+        if piece_type == PAWN:
+            yield from self.generate_pawn(orig_sq)
+            return
+
+
+        # piece is slider or stepper
+        is_stepper = piece_type in (KING, KNIGHT)
+
+        directions = DIRECTIONS[piece_type]
         
         for direction in directions:
             sq = orig_sq + direction  # start with one step already
@@ -123,27 +147,15 @@ class Position:
                     yield move
                     sq += direction
 
+                    if is_stepper:
+                        break
+
                 # same color, end here
                 elif get_color(self.board[sq]) == get_color(self.board[orig_sq]):
                     break
                 else:  # enemy
                     yield move
                     break
-
-    def generate_stepper(self, directions, orig_sq):
-        """Generate psuedo-legal moves for pieces that have fixed movement"""
-        
-        piece_type = get_type(self.board[orig_sq])
-        assert piece_type in (KING, KNIGHT)
-
-        for direction in directions:
-            sq = orig_sq + direction
-            if sq_valid(sq):
-                move = Move(orig_sq, sq)
-                if self.board[sq] == EMPTY:
-                    yield move
-                elif get_color(self.board[sq]) != get_color(self.board[orig_sq]):
-                    yield move
 
 
     def generate_pawn(self, sq: int):
@@ -190,27 +202,6 @@ class Position:
             else:
                 yield Move(sq, to_sq)
 
-
-    def generate_attacks(self, sq):
-        """Generate all attacks from piece on sq (doesn't include castling)
-        (currently include EP)
-        """
-        piece = self.board[sq]
-        piece_type = get_type(piece)
-
-        # TODO: refactor and simplify this
-        if piece_type == PAWN:
-            yield from self.generate_pawn(sq)
-        elif piece_type == KNIGHT:
-            yield from self.generate_stepper(DIRECTION_KNIGHT, sq)
-        elif piece_type == BISHOP:
-            yield from self.generate_slider(DIRECTION_BISHOP, sq)
-        elif piece_type == ROOK:
-            yield from self.generate_slider(DIRECTION_ROOK, sq)
-        elif piece_type == QUEEN:
-            yield from self.generate_slider(DIRECTION_QUEEN, sq)
-        elif piece_type == KING:
-            yield from self.generate_stepper(DIRECTION_KING, sq)
 
 
     def is_attacked(self, sq, attacker_color):
