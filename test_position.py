@@ -121,3 +121,15 @@ def test_pawn():
          
     # black pawn
     assert moves_as_str(pos.generate_attacks(SQ("d4"))) == ["d4d3", "d4e3"]
+
+
+def test_is_attacked():
+    # Test only for castling
+    pos = Position("r3kN1r/1K6/8/8/2B1R3/8/8/8 b kq - 0 1")
+
+    assert not pos.is_attacked(SQ("f8"), WHITE)  # occupied but not attacked
+    assert pos.is_attacked(SQ("e8"), WHITE)  # king in check
+    assert pos.is_attacked(SQ("g8"), WHITE)
+    assert pos.is_attacked(SQ("b8"), WHITE)
+    assert pos.is_attacked(SQ("c8"), WHITE)
+    assert not pos.is_attacked(SQ("d8"), WHITE)

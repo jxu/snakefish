@@ -127,7 +127,9 @@ class Position:
         
         piece = self.board[orig_sq]
         piece_type = get_type(piece)
-        assert piece_type != EMPTY
+
+        if piece_type == EMPTY:
+            return
 
         if piece_type == PAWN:
             yield from self.generate_pawn(orig_sq)
@@ -205,7 +207,11 @@ class Position:
 
 
     def is_attacked(self, sq, attacker_color):
-        """Determine if square (possibly empty) is attacked by piece with given color"""
+        """Determine if square (possibly empty) is attacked by piece with given color
+
+        Only actually used for castling check. would be much more efficient
+        with bitboards
+        """
         
         for i in range(BOARD_SIZE):
             if not sq_valid(i): continue
@@ -213,7 +219,8 @@ class Position:
             if get_color(self.board[i]) == attacker_color:
                 attacks = self.generate_attacks(i)
                 for move in attacks:
-                    pass 
+                    if move.to == sq:
+                        return True
 
         return False
                 
