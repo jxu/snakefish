@@ -91,13 +91,11 @@ class Position:
         self.black_move = fen_split[1] == 'b'
 
         # Castling rights
-        self.castling = 0
+        self.castling = [False] * 4
         castling = fen_split[2]
-        if castling == '-':
-            self.castling = 0
-        else:
+        if castling != '-':
             for c in castling:
-                self.castling |= CASTLE_MAP[c]  
+                self.castling[CASTLE_MAP[c]] = True
 
         # EP target
         ep_target_raw = fen_split[3]
@@ -167,6 +165,7 @@ class Position:
         assert sq_row(sq) not in (0, 7)  # illegal pawn position
 
         # handle both colors at once
+        # TODO: adjust move generation to set flags
         to_sqs = []
 
         direction = NN if get_color(piece) == WHITE else SS
@@ -200,7 +199,7 @@ class Position:
         for to_sq in to_sqs:
             if sq_row(to_sq) in (0, 7):
                 for promo in (KNIGHT, BISHOP, ROOK, QUEEN):
-                    yield Move(sq, to_sq, promotion=promo)
+                    yield Move(sq, to_sq, promotion=promo)  # record promo
             else:
                 yield Move(sq, to_sq)
 
@@ -223,5 +222,36 @@ class Position:
                         return True
 
         return False
-                
 
+
+    def generate_castle(self):
+        """Generate all possible castling moves in the position.
+
+        To castle:
+        - Must have castling rights (tracked seperately by Position object)
+        - Must have empty spaces in between
+        - Cannot castle out of, through, or into check
+          - (Technically ending in check is pseudolegal)
+        """
+        A1, B1, C1, D1, E1, F1, G1, H1 = range(0x00, 0x08)
+        A8, B8, C8, D8, E8, F8, G8, H8 = range(0x70, 0x78)
+
+        # arrays in order of WK, WQ, BK, BQ
+        KING_SQUARES = [(E1, F1, G1), (E1, D1, C1), (E8, F8, G8), (E8, D8, C8)]
+
+        IN_BETWEEN = [(F1, G1), (D1, C1, B1), (F8, G8), (D8, C8, B8)]
+        ENEMY_COLOR = (BLACK, BLACK, WHITE, WHITE)
+
+        for i in range(4):
+            # castling rights
+            if self.castling[i]:
+                assert get_type(self.board[KING_SQUARES[i][0]]) == KING
+                # squares empty
+                if all(self.board[s] == EMPTY for s in IN_BETWEEN[i]):
+                    # king not in check
+                    if all(not self.is_attacked(s, ENEMY_COLOR[i]) for s in KING_SQUARES[i]):
+                        yield Move(KING_SQUARES[i][0], KING_SQUARES[i][-1], castle=True)
+                    
+
+    def make_move(self, move: Move):
+        """Make move, updating Position flags"""

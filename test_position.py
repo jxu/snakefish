@@ -21,7 +21,7 @@ def test_position():
             assert start_pos.board[sq_index(r, c)] == BOARD[r][c]
 
     assert start_pos.black_move == False
-    assert start_pos.castling == 0xf
+    assert start_pos.castling == [True]*4
     assert start_pos.ep_target == None
     assert start_pos.halfmove == 0
     assert start_pos.fullmove == 1
@@ -41,7 +41,7 @@ def test_position():
 
 
     assert pos1.black_move == True
-    assert pos1.castling == 0xf
+    assert pos1.castling == [True]*4
     assert pos1.ep_target == sq_from_coord("e3")
     assert pos1.halfmove == 0
     assert pos1.fullmove == 1
@@ -133,3 +133,16 @@ def test_is_attacked():
     assert pos.is_attacked(SQ("b8"), WHITE)
     assert pos.is_attacked(SQ("c8"), WHITE)
     assert not pos.is_attacked(SQ("d8"), WHITE)
+
+
+def test_castle():
+    # starting position
+    pos = Position(START_FEN)
+    assert list(pos.generate_castle()) == []
+
+
+    # all castling position
+    pos = Position("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+    
+    moves = pos.generate_castle() 
+    assert moves_as_str(moves) == ["e1c1", "e1g1", "e8c8", "e8g8"]
