@@ -237,7 +237,7 @@ class Position:
 
 
     def generate_castle(self):
-        """Generate all possible castling moves in the position.
+        """Generate possible castling moves (by side to move) in the position.
 
         To castle:
         - Must have castling rights (tracked seperately by Position object)
@@ -252,9 +252,14 @@ class Position:
         KING_SQUARES = [(E1, F1, G1), (E1, D1, C1), (E8, F8, G8), (E8, D8, C8)]
 
         IN_BETWEEN = [(F1, G1), (D1, C1, B1), (F8, G8), (D8, C8, B8)]
+        KING_COLOR = (WHITE, WHITE, BLACK, BLACK)
         ENEMY_COLOR = (BLACK, BLACK, WHITE, WHITE)
 
         for i in range(4):
+            # only generate moves for side to move
+            if KING_COLOR[i] != self.side:
+                continue
+
             # castling rights
             if self.castling[i]:
                 assert get_type(self.board[KING_SQUARES[i][0]]) == KING

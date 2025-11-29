@@ -154,4 +154,8 @@ def test_castle():
     pos = Position("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
     
     moves = pos.generate_castle() 
-    assert moves_as_str(moves) == ["e1c1", "e1g1", "e8c8", "e8g8"]
+    # white castling
+    assert moves_as_str(moves) == ["e1c1", "e1g1"]
+    # black castling
+    pos.side = BLACK
+    assert moves_as_str(pos.generate_castle()) == ["e8c8", "e8g8"]
