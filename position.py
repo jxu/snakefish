@@ -31,12 +31,12 @@ class Position:
     https://www.chessprogramming.org/Chess_Position
 
     Similar to FEN:
-    - Piece placement
-    - Side to move
-    - Castling rights
-    - EP target square
-    - Halfmove clock
-    - Fullmove counter
+    - board: Piece placement as list of 128
+    - side: Side to move (WHITE or BLACK)
+    - castling: Castling rights (4 bools)
+    - ep_target: EP target square
+    - halfmove: Halfmove clock
+    - fullmove: Fullmove counter
 
     Also movegen methods are here for now.
     """
@@ -86,9 +86,12 @@ class Position:
 
         # Parse the rest
         # Side to move
-        if fen_split[1] not in ('w', 'b'):
-            raise ValueError("Black move")
-        self.black_move = fen_split[1] == 'b'
+        if fen_split[1] == 'w':
+            self.side = WHITE
+        elif fen_split[1] == 'b':
+            self.side = BLACK
+        else:
+            raise ValueError("invalid side")
 
         # Castling rights
         self.castling = [False] * 4
@@ -116,7 +119,7 @@ class Position:
     def generate_attacks(self, orig_sq: int) -> Iterator[Move]:
         """Generate pseudo-legal piece moves from the position's board
 
-        Detect the piece from given square.
+        Detect the piece and color from given square.
 
         Includes sliders (rook, bishop, queen) and steppers (king without castling, knight)
 
@@ -127,6 +130,10 @@ class Position:
         piece_type = get_type(piece)
 
         if piece_type == EMPTY:
+            return
+
+        # Generate no moves for not my side to move
+        if get_color(piece) != self.side:
             return
 
         if piece_type == PAWN:
@@ -211,6 +218,9 @@ class Position:
         Only actually used for castling check. would be much more efficient
         with bitboards
         """
+        # ignore current side to move, generate attacks by attacker_color
+        orig_side = self.side
+        self.side = attacker_color
         
         for i in range(BOARD_SIZE):
             if not sq_valid(i): continue
@@ -219,8 +229,10 @@ class Position:
                 attacks = self.generate_attacks(i)
                 for move in attacks:
                     if move.to == sq:
+                        self.side = orig_side  # restore
                         return True
 
+        self.side = orig_side  # restore
         return False
 
 

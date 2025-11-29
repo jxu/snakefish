@@ -70,6 +70,12 @@ def get_color(piece):
     if piece < 0: return BLACK
     return NEUTRAL
 
+
+def invert(color):
+    assert color != NEUTRAL
+    return -color
+
+
 def get_type(piece):
     return abs(piece)
 
@@ -118,5 +124,4 @@ def is_coord_valid(coord: str) -> bool:
     return ((len(coord) == 2) and
             (coord[0] in "abcdefgh") and 
             (coord[1] in "12345678"))
-
 

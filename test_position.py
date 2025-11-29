@@ -20,7 +20,7 @@ def test_position():
         for c in range(8):
             assert start_pos.board[sq_index(r, c)] == BOARD[r][c]
 
-    assert start_pos.black_move == False
+    assert start_pos.side == WHITE
     assert start_pos.castling == [True]*4
     assert start_pos.ep_target == None
     assert start_pos.halfmove == 0
@@ -40,12 +40,11 @@ def test_position():
             assert pos1.board[sq_index(r, c)] == BOARD[r][c]
 
 
-    assert pos1.black_move == True
+    assert pos1.side == BLACK
     assert pos1.castling == [True]*4
     assert pos1.ep_target == sq_from_coord("e3")
     assert pos1.halfmove == 0
     assert pos1.fullmove == 1
-
 
 
 
@@ -61,6 +60,14 @@ def test_rook():
     assert (moves_as_str(moves) == 
         ['c5a5', 'c5b5', 'c5c2', 'c5c3', 'c5c4', 'c5c6', 'c5d5', 'c5e5'])
 
+    # no white moves for black rook
+    assert list(pos.generate_attacks(SQ("c2"))) == []
+
+    # no white moves for empty
+    assert list(pos.generate_attacks(SQ("a1"))) == [] 
+
+    # switch to black turn
+    pos.side = BLACK
     moves = pos.generate_attacks(SQ("c2"))  # c2 black rook
     assert (moves_as_str(moves) == 
             ['c2a2', 'c2b2', 'c2c3', 'c2c4', 'c2c5', 'c2d2', 'c2e2', 'c2f2', 'c2g2', 'c2h2'])
@@ -71,11 +78,12 @@ def test_rook():
 
 def test_bishop():
     pos = Position("8/4P3/8/2Bk4/2b5/8/5p2/5K2 w - - 0 1")
-    moves = pos.generate_attacks(SQ("c5"))
+    moves = pos.generate_attacks(SQ("c5"))  # white bishop
     assert (moves_as_str(moves) == 
             ['c5a3', 'c5a7', 'c5b4', 'c5b6', 'c5d4', 'c5d6', 'c5e3', 'c5f2'])
 
-    moves = pos.generate_attacks(SQ("c4"))
+    pos.side = BLACK
+    moves = pos.generate_attacks(SQ("c4"))  # black bishop
     assert (moves_as_str(moves) == 
             ['c4a2', 'c4a6', 'c4b3', 'c4b5', 'c4d3', 'c4e2', 'c4f1'])
 
@@ -120,6 +128,7 @@ def test_pawn():
     "g7g8b", "g7g8n", "g7g8q", "g7g8r"]
          
     # black pawn
+    pos.side = BLACK
     assert moves_as_str(pos.generate_attacks(SQ("d4"))) == ["d4d3", "d4e3"]
 
 
