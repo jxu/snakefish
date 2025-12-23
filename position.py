@@ -245,8 +245,6 @@ class Position:
         - Cannot castle out of, through, or into check
           - (Technically ending in check is pseudolegal)
         """
-        A1, B1, C1, D1, E1, F1, G1, H1 = range(0x00, 0x08)
-        A8, B8, C8, D8, E8, F8, G8, H8 = range(0x70, 0x78)
 
         # arrays in order of WK, WQ, BK, BQ
         KING_SQUARES = [(E1, F1, G1), (E1, D1, C1), (E8, F8, G8), (E8, D8, C8)]
