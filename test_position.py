@@ -162,6 +162,7 @@ def test_castle():
 
 
 def test_make_move():
+    # Assume moves are all valid
     pos = Position(START_FEN)
     
     # 1. e4
@@ -181,3 +182,26 @@ def test_make_move():
     assert pos.halfmove == 0
     # fullmove counter not incremented
     assert pos.fullmove == 1
+
+    # 1. ...c5
+    pos.make_move(Move(C7, C5, double_pawn_push=True))
+    
+    assert pos.board[C7] == EMPTY
+    assert pos.board[C5] == -PAWN
+    assert pos.side == WHITE
+    assert pos.castling == [True]*4
+    assert pos.ep_target == C6
+    assert pos.halfmove == 0
+    assert pos.fullmove == 2
+
+    # 2. ...Nf3
+    pos.make_move(Move(G1, F3))
+
+    assert pos.board[G1] == EMPTY
+    assert pos.board[F3] == KNIGHT
+    assert pos.side == BLACK
+    assert pos.castling == [True]*4
+    assert pos.ep_target == None
+    assert pos.halfmove == 1
+    assert pos.fullmove == 2
+

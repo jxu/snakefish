@@ -277,7 +277,11 @@ class Position:
                     
 
     def make_move(self, move: Move):
-        """Make pseudo-legal move, updating Position flags"""
+        """Make pseudo-legal move, updating Position flags
+
+        See https://www.chessprogramming.org/Forsyth-Edwards_Notation
+        for how position is stored
+        """
         
         # ensure to square doesn't have piece of same color
         assert get_color(self.board[move.to]) != self.side
@@ -290,9 +294,7 @@ class Position:
         # do board update: from square is vacated, to square is replaced
         self.board[move.from_] = EMPTY
         self.board[move.to] = piece
-        
-        # invert side to move
-        self.side = invert(self.side)
+
 
         # castling rights are based on if kings and rooks have moved
         # (left their from square) or been captured
@@ -308,4 +310,25 @@ class Position:
                     self.board[KING_SQUARE[i]] != KING_PIECE[i]):
                 self.castling[i] = False
 
-        # EP target set always if double pawn push
+        # EP target set always if double pawn push (assume valid)
+        if move.double_pawn_push:
+            row = sq_row(move.to)
+            # EP is set behind to_square
+            new_row = row - 1 if get_color(piece) == WHITE else row + 1 
+            self.ep_target = sq_index(new_row, sq_col(move.to))
+        else:
+            self.ep_target = None
+
+        # Halfmove clock reset to zero after a capture or pawn move,
+        # increment otherwise
+        if move.capture or get_type(piece) == PAWN:
+            self.halfmove = 0
+        else:
+            self.halfmove += 1
+
+        # Fullmove counter increments on black's move
+        if self.side == BLACK:
+            self.fullmove += 1
+
+        # finally, invert side to move
+        self.side = invert(self.side)
