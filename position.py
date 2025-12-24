@@ -173,43 +173,51 @@ class Position:
         assert sq_row(sq) not in (0, 7)  # illegal pawn position
 
         # handle both colors at once
-        # TODO: adjust move generation to set flags
-        to_sqs = []
 
         direction = NN if get_color(piece) == WHITE else SS
         capture_dirs = (NE, NW) if get_color(piece) == WHITE else (SE, SW)
         home_row = 1 if get_color(piece) == WHITE else 6
+        END_ROWS = (0, 7)
        
         # try single step, including possible promotion
         step_sq = sq + direction
         # sq_valid test not needed because pawn can't be in rows 0 or 7
         if self.board[step_sq] == EMPTY:
-            to_sqs.append(step_sq)
+            # promotions
+            if sq_row(step_sq) in END_ROWS:
+                for promo in (KNIGHT, BISHOP, ROOK, QUEEN):
+                    yield Move(sq, step_sq, promotion=promo)  # record promo
+     
+            else:
+                yield Move(sq, step_sq)
 
 
-        # try double step if possible
+        # try double step from home row if possible
         if sq_row(sq) == home_row:
             step2_sq = step_sq + direction
             # both squares in front must be empty
             if self.board[step_sq] == EMPTY and self.board[step2_sq] == EMPTY:
-                to_sqs.append(step2_sq)
+                yield Move(sq, step2_sq, double_pawn_push=True)
 
         # try capture (including en passant, based on position's target ep square)
         for dir in capture_dirs:
             capture_sq = sq + dir
             if sq_valid(capture_sq):
                 capture_piece = self.board[capture_sq]
-                if ((capture_piece != EMPTY and get_color(piece) != get_color(capture_piece)) or
-                        capture_sq == self.ep_target):
-                    to_sqs.append(capture_sq)
+                if (capture_piece != EMPTY and 
+                     get_color(piece) != get_color(capture_piece)):
 
-        # Generate moves, possibly with promotions
-        for to_sq in to_sqs:
-            if sq_row(to_sq) in (0, 7):
-                for promo in (KNIGHT, BISHOP, ROOK, QUEEN):
-                    yield Move(sq, to_sq, promotion=promo)  # record promo
-            else:
-                yield Move(sq, to_sq)
+                    # TODO: consolidate with previous promo yield
+                    if sq_row(capture_sq) in END_ROWS:
+                        for promo in (KNIGHT, BISHOP, ROOK, QUEEN):
+                            yield Move(sq, capture_sq, promotion=promo)  # record promo
+             
+                    else:
+                        yield Move(sq, capture_sq, capture=True)
+
+                # EP capture
+                if capture_sq == self.ep_target:
+                    yield Move(sq, capture_sq, capture=True)
 
 
 
@@ -291,10 +299,13 @@ class Position:
 
         # TODO: make more robust without assuming indices WK, WQ, BK, BQ
         ROOK_SQUARE = (H1, A1, H8, A8)
+        ROOK_PIECE  = (ROOK, ROOK, -ROOK, -ROOK)
         KING_SQUARE = (E1, E1, E8, E8)
+        KING_PIECE  = (KING, KING, -KING, -KING)
 
         for i in range(4):
-            if (self.board[ROOK_SQUARE[i]] != ROOK or 
-                    self.board[KING_SQUARE[i]] != KING):
+            if (self.board[ROOK_SQUARE[i]] != ROOK_PIECE[i] or 
+                    self.board[KING_SQUARE[i]] != KING_PIECE[i]):
                 self.castling[i] = False
 
+        # EP target set always if double pawn push
