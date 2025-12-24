@@ -25,93 +25,118 @@ Uses an int instead of object for efficiency
 Square Coordinates are file-rank combo like h8
 """
 
+from enum import IntEnum
+
 BOARD_SIZE = 128
 
-# global constant squares for convenience
-A1, B1, C1, D1, E1, F1, G1, H1 = range(0x00, 0x08)
-A2, B2, C2, D2, E2, F2, G2, H2 = range(0x10, 0x18)
-A3, B3, C3, D3, E3, F3, G3, H3 = range(0x20, 0x28)
-A4, B4, C4, D4, E4, F4, G4, H4 = range(0x30, 0x38)
-A5, B5, C5, D5, E5, F5, G5, H5 = range(0x40, 0x48)
-A6, B6, C6, D6, E6, F6, G6, H6 = range(0x50, 0x58)
-A7, B7, C7, D7, E7, F7, G7, H7 = range(0x60, 0x68)
-A8, B8, C8, D8, E8, F8, G8, H8 = range(0x70, 0x78)
-
-# Piece type (positive for white, negative for black)
-EMPTY   = 0
-PAWN    = 1
-KNIGHT  = 2
-BISHOP  = 3
-ROOK    = 4
-QUEEN   = 5
-KING    = 6
+class Square(IntEnum):
+    """Constant board squares for convenience"""
+    A1, B1, C1, D1, E1, F1, G1, H1 = range(0x00, 0x08)
+    A2, B2, C2, D2, E2, F2, G2, H2 = range(0x10, 0x18)
+    A3, B3, C3, D3, E3, F3, G3, H3 = range(0x20, 0x28)
+    A4, B4, C4, D4, E4, F4, G4, H4 = range(0x30, 0x38)
+    A5, B5, C5, D5, E5, F5, G5, H5 = range(0x40, 0x48)
+    A6, B6, C6, D6, E6, F6, G6, H6 = range(0x50, 0x58)
+    A7, B7, C7, D7, E7, F7, G7, H7 = range(0x60, 0x68)
+    A8, B8, C8, D8, E8, F8, G8, H8 = range(0x70, 0x78)
 
 
-PIECE_MAP = {
-    'P': PAWN,
-    'N': KNIGHT,
-    'B': BISHOP,
-    'R': ROOK,
-    'Q': QUEEN,
-    'K': KING,
+class PieceType(IntEnum):
+    """Piece TYPE (colorless)"""
+    EMPTY   = 0
+    PAWN    = 1
+    KNIGHT  = 2
+    BISHOP  = 3
+    ROOK    = 4
+    QUEEN   = 5
+    KING    = 6
+
+class PieceCode(IntEnum):
+    """Piece CODE (with color)"""
+    EMPTY   = 0
+
+    WPAWN   = 1
+    WKNIGHT = 2
+    WBISHOP = 3
+    WROOK   = 4
+    WQUEEN  = 5
+    WKING   = 6
+
+    BPAWN   = -1
+    BKNIGHT = -2
+    BBISHOP = -3
+    BROOK   = -4
+    BQUEEN  = -5
+    BKING   = -6
+
+
+PIECETYPE_MAP = {
+    'P': PieceType.PAWN,
+    'N': PieceType.KNIGHT,
+    'B': PieceType.BISHOP,
+    'R': PieceType.ROOK,
+    'Q': PieceType.QUEEN,
+    'K': PieceType.KING,
 }
 
-# color enum
-BLACK = -1
-WHITE = 1
-NEUTRAL = 0
+class Color(IntEnum):
+    BLACK = -1
+    WHITE = 1
+    NEUTRAL = 0
 
 # castling flag indices
-CASTLE_WK = 0
-CASTLE_WQ = 1
-CASTLE_BK = 2
-CASTLE_BQ = 3
+class CastleIndex(IntEnum):
+    WK = 0
+    WQ = 1
+    BK = 2
+    BQ = 3
 
 CASTLE_MAP = {
-    'K': CASTLE_WK,
-    'Q': CASTLE_WQ,
-    'k': CASTLE_BK,
-    'q': CASTLE_BQ,
+    'K': CastleIndex.WK,
+    'Q': CastleIndex.WQ,
+    'k': CastleIndex.BK,
+    'q': CastleIndex.BQ,
 }
 
-
-def get_color(piece):
-    if piece > 0: return WHITE
-    if piece < 0: return BLACK
-    return NEUTRAL
-
-
-def invert(color):
-    assert color != NEUTRAL
-    return -color
+# More type safety!
+def get_color(piece_code: PieceCode) -> Color:
+    # Relies on PieceCode's values
+    if piece_code > 0: return Color.WHITE
+    if piece_code < 0: return Color.BLACK
+    return Color.NEUTRAL
 
 
-def get_type(piece):
-    return abs(piece)
+def invert_color(color: Color) -> Color:
+    assert color != color.NEUTRAL  # shouldn't be doing this
+    return Color(-color)
+
+
+def get_piece_type(piece_code: PieceCode) -> PieceType:
+    return PieceType(abs(piece_code))
 
 # 0x88 board coordinate transformations
 
-def sq_index(row, col):
+def sq_index(row: int, col: int) -> Square:
     assert 0 <= row <= 7 and 0 <= col <= 7
-    return 16 * row + col
+    return Square(16 * row + col)
 
 
-def sq_valid(sq):
+def sq_valid(sq: int) -> bool:
     """Check if sq is a valid 0x88 square."""
     return (sq & 0x88) == 0  # the magic
 
 
-def sq_col(sq):
+def sq_col(sq: Square) -> int:
     """Get square's column 0-7 (corresponds to files a-h)"""
     return sq & 0x7  # low nibble
 
 
-def sq_row(sq):
+def sq_row(sq: Square) -> int:
     """Get square's row 0-7 (corresponds to ranks 1-8)"""
     return sq >> 4  # high nibble
 
 
-def sq_to_coord(sq: int) -> str:
+def sq_to_coord(sq: Square) -> str:
     """Get algebraic coordinates from square index."""
     assert sq_valid(sq)
     file = "abcdefgh"[sq_col(sq)]
@@ -125,9 +150,6 @@ def sq_from_coord(coord: str) -> int:
     col = ord(coord[0]) - ord('a')
     row = ord(coord[1]) - ord('1')
     return sq_index(row, col)
-   
-# shortcut function
-SQ = sq_from_coord
 
 def is_coord_valid(coord: str) -> bool:
     """Check if a string is a valid algebraic coordinate."""
