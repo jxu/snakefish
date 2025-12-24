@@ -205,3 +205,13 @@ def test_make_move():
     assert pos.halfmove == 1
     assert pos.fullmove == 2
 
+    # Test castling rights 
+    italian_fen = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
+    pos = Position(italian_fen)
+    pos.make_move(Move(E1, E2))  # move king
+    assert pos.castling == [False, False, True, True]
+    
+    pos = Position(italian_fen)  # recreated
+    pos.make_move(Move(H1, F1))  # move rook
+    assert pos.castling == [False, True, True, True]
+
