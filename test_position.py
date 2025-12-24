@@ -112,6 +112,8 @@ def test_knight():
 
 def test_pawn():
     pos = Position("1k3b2/6P1/8/4pPpP/3p4/1P2N3/1PPP4/1K6 w - e6 0 1")
+
+    # single or double push
     assert moves_as_str(pos.generate_attacks(SQ("c2"))) == ["c2c3", "c2c4"]
     assert moves_as_str(pos.generate_attacks(SQ("b2"))) == []
 
@@ -159,6 +161,23 @@ def test_castle():
     # black castling
     pos.side = BLACK
     assert moves_as_str(pos.generate_castle()) == ["e8c8", "e8g8"]
+
+    # can't castle out of check
+    pos = Position("r3k2r/8/2Q5/8/8/8/8/4K3 b kq - 0 1")
+    assert list(pos.generate_castle()) == []
+
+    # can't castle through/into check
+    # kingside through check, queenside is ok here
+    pos = Position("r3k2r/8/8/8/5R2/8/8/4K3 b kq - 0 1")
+    assert moves_as_str(pos.generate_castle()) == ["e8c8"]
+    
+    # queenside through check, kingside is ok
+    pos = Position("r3k2r/8/8/8/2R5/8/8/4K3 b kq - 0 1")
+    assert moves_as_str(pos.generate_castle()) == ["e8g8"]
+
+    # b8 is attacked but king doesn't go through
+    pos = Position("r3k2r/8/8/8/1Q6/8/8/4K3 b kq - 0 1")
+    assert moves_as_str(pos.generate_castle()) == ["e8c8"]
 
 
 def test_make_move():

@@ -251,7 +251,7 @@ class Position:
         - Must have castling rights (tracked seperately by Position object)
         - Must have empty spaces in between
         - Cannot castle out of, through, or into check
-          - (Technically ending in check is pseudolegal)
+          - Not included even for pseudo-legal
         """
 
         # arrays in order of WK, WQ, BK, BQ
