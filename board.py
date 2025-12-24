@@ -61,7 +61,7 @@ BLACK = -1
 WHITE = 1
 NEUTRAL = 0
 
-# castling flags
+# castling flag indices
 CASTLE_WK = 0
 CASTLE_WQ = 1
 CASTLE_BK = 2

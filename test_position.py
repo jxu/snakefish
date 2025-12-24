@@ -159,3 +159,25 @@ def test_castle():
     # black castling
     pos.side = BLACK
     assert moves_as_str(pos.generate_castle()) == ["e8c8", "e8g8"]
+
+
+def test_make_move():
+    pos = Position(START_FEN)
+    
+    # 1. e4
+    pos.make_move(Move(E2, E4, double_pawn_push=True))
+    # pawn actually moved
+    assert pos.board[E2] == EMPTY
+    assert pos.board[E4] == PAWN
+
+    # switched sides after move
+    assert pos.side == BLACK
+
+    # castling rights preserved
+    assert pos.castling == [True]*4
+    # ensure EP square is marked even if it's not possible
+    assert pos.ep_target == E3
+    # halfmove clock reset to zero after pawn move!
+    assert pos.halfmove == 0
+    # fullmove counter not incremented
+    assert pos.fullmove == 1

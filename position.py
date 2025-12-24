@@ -33,7 +33,8 @@ class Position:
     Similar to FEN:
     - board: Piece placement as list of 128
     - side: Side to move (WHITE or BLACK)
-    - castling: Castling rights (4 bools)
+    - castling: Castling rights (4 bools) 
+        (not if castling is actually possible)
     - ep_target: EP target square
     - halfmove: Halfmove clock
     - fullmove: Fullmove counter
@@ -215,8 +216,7 @@ class Position:
     def is_attacked(self, sq, attacker_color):
         """Determine if square (possibly empty) is attacked by piece with given color
 
-        Only actually used for castling check. would be much more efficient
-        with bitboards
+        would be much more efficient with bitboards
         """
         # ignore current side to move, generate attacks by attacker_color
         orig_side = self.side
@@ -269,4 +269,32 @@ class Position:
                     
 
     def make_move(self, move: Move):
-        """Make move, updating Position flags"""
+        """Make pseudo-legal move, updating Position flags"""
+        
+        # ensure to square doesn't have piece of same color
+        assert get_color(self.board[move.to]) != self.side
+
+        # piece to move
+        piece = self.board[move.from_]
+        # piece should be side to move color
+        assert get_color(piece) == self.side
+
+        # do board update: from square is vacated, to square is replaced
+        self.board[move.from_] = EMPTY
+        self.board[move.to] = piece
+        
+        # invert side to move
+        self.side = invert(self.side)
+
+        # castling rights are based on if kings and rooks have moved
+        # (left their from square) or been captured
+
+        # TODO: make more robust without assuming indices WK, WQ, BK, BQ
+        ROOK_SQUARE = (H1, A1, H8, A8)
+        KING_SQUARE = (E1, E1, E8, E8)
+
+        for i in range(4):
+            if (self.board[ROOK_SQUARE[i]] != ROOK or 
+                    self.board[KING_SQUARE[i]] != KING):
+                self.castling[i] = False
+
