@@ -119,10 +119,12 @@ class Position:
 
     def generate_attacks(self, orig_sq: int) -> Iterator[Move]:
         """Generate pseudo-legal piece moves from the position's board
-
+        
+        (Doesn't have to be a capture)
         Detect the piece and color from given square.
 
         Includes sliders (rook, bishop, queen) and steppers (king without castling, knight)
+        
 
         castling handled separately
         """

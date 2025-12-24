@@ -133,6 +133,10 @@ def test_pawn():
     pos.side = BLACK
     assert moves_as_str(pos.generate_attacks(SQ("d4"))) == ["d4d3", "d4e3"]
 
+    # EP is pseudo-legal here, but not legal
+    pos = Position("8/6bb/8/8/R1pP2k1/4P3/P7/K7 b - - 0 10")
+    assert moves_as_str(pos.generate_pawn(C4)) == ["c4c3"]
+
 
 def test_is_attacked():
     # Test only for castling
