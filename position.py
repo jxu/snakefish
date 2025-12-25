@@ -1,28 +1,43 @@
 """Position class, as well as movegen"""
 
-from board import *
 from move import *
+from enum import IntEnum
 from collections.abc import Iterator
 
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+class Direction(IntEnum):
+    N = 16
+    E = 1
+    S = -16
+    W = -1
+    NE = N + E
+    SE = S + E
+    SW = S + W
+    NW = N + W
 
-NN = 16
-EE = 1
-SS = -16
-WW = -1
-NE = NN + EE
-SE = SS + EE
-SW = SS + WW
-NW = NN + WW
+    # knight moves
+    NNE = N + NE
+    NNW = N + NW
+    ENE = E + NE
+    ESE = E + SE
+    SSE = S + SE
+    SSW = S + SW
+    WNW = W + NW
+    WSW = W + SW
 
-DIRECTIONS = {
-    ROOK: (NN, EE, SS, WW),
-    BISHOP: (NE, SE, SW, NW),
-    KNIGHT: (NN+NE, NN+NW, EE+NE, EE+SE, SS+SE, SS+SW, WW+SW, WW+NW)
+Dir = Direction
+
+PIECE_DIR = {
+    PieceType.ROOK: (Dir.N, Dir.E, Dir.S, Dir.W),
+    PieceType.BISHOP: (Dir.NE, Dir.SE, Dir.SW, Dir.NW),
+    PieceType.KNIGHT: (Dir.NNE, Dir.NNW, Dir.ENE, Dir.ESE,
+                       Dir.SSE, Dir.SSW, Dir.WNW, Dir.WSW)
 }
-DIRECTIONS[QUEEN] = DIRECTIONS[ROOK] + DIRECTIONS[BISHOP]
-DIRECTIONS[KING] = DIRECTIONS[QUEEN]
+PIECE_DIR[PT.QUEEN] = (
+        PIECE_DIR[PT.ROOK] + PIECE_DIR[PT.BISHOP])
+# king moves in the same directions as queen
+PIECE_DIR[PT.KING] = PIECE_DIR[PT.QUEEN]
 
 
 class Position:
@@ -33,8 +48,7 @@ class Position:
     Similar to FEN:
     - board: Piece placement as list of 128
     - side: Side to move (WHITE or BLACK)
-    - castling: Castling rights (4 bools) 
-        (not if castling is actually possible)
+    - castling: Castling rights (4 bools) (not if castling is actually possible)
     - ep_target: EP target square
     - halfmove: Halfmove clock
     - fullmove: Fullmove counter
@@ -42,10 +56,10 @@ class Position:
     Also movegen methods are here for now.
     """
 
-    def __init__(self, fen):
+    def __init__(self, fen: str = START_FEN):
         """Constructs a Position from a given FEN string."""
 
-        self.board = [EMPTY] * 128
+        self.board = [PT.EMPTY] * 128
 
         fen_split = fen.split()
 
@@ -71,7 +85,7 @@ class Position:
                     c = c.upper()  # reduce piece checking cases
 
                     try:
-                        piece = PIECE_MAP[c]
+                        piece = PIECETYPE_MAP[c]
                     except KeyError:
                         raise ValueError("Unrecognized piece")
 
@@ -88,9 +102,9 @@ class Position:
         # Parse the rest
         # Side to move
         if fen_split[1] == 'w':
-            self.side = WHITE
+            self.side = Color.WHITE
         elif fen_split[1] == 'b':
-            self.side = BLACK
+            self.side = Color.BLACK
         else:
             raise ValueError("invalid side")
 
@@ -116,21 +130,33 @@ class Position:
         self.fullmove = int(fen_split[5])
 
 
+    def stepper_attacks(self, square: Square, piece_type: PieceType):
+        """Generate targeted squares of pieces that don't depend on occupancy
+        (king, knight)
 
-    def generate_attacks(self, orig_sq: int) -> Iterator[Move]:
-        """Generate pseudo-legal piece moves from the position's board
-        
-        (Doesn't have to be a capture)
-        Detect the piece and color from given square.
+        Bitboard style: Regardless of what is actually on square or
+        what is occupying the targets!
+        """
+        if piece_type not in (PT.KNIGHT, PT.KING):
+            raise ValueError
+
+        directions = PIECE_DIR[piece_type]
+
+        for direction in directions:
+            step_square = square + direction
+            if sq_valid(step_square):
+                yield step_square
+
+
+    # TODO: MAJOR OVERHAUL
+    def generate_piece_attacks(self, side) -> Iterator[Move]:
+        """Generate ALL (pseudo-legal) attacks by side
 
         Includes sliders (rook, bishop, queen) and steppers (king without castling, knight)
-        
-
-        castling handled separately
         """
         
         piece = self.board[orig_sq]
-        piece_type = get_type(piece)
+        piece_type = get_piece_type(piece)
 
         if piece_type == EMPTY:
             return
@@ -147,7 +173,7 @@ class Position:
         # piece is slider or stepper
         is_stepper = piece_type in (KING, KNIGHT)
 
-        directions = DIRECTIONS[piece_type]
+        directions = PIECE_DIR[piece_type]
         
         for direction in directions:
             sq = orig_sq + direction  # start with one step already
@@ -171,7 +197,7 @@ class Position:
     def generate_pawn(self, sq: int):
         """Generate psuedo-legal pawn movement"""
         piece = self.board[sq]
-        assert get_type(piece) == PAWN
+        assert get_piece_type(piece) == PAWN
         assert sq_row(sq) not in (0, 7)  # illegal pawn position
 
         # handle both colors at once
@@ -223,26 +249,26 @@ class Position:
 
 
 
-    def is_attacked(self, sq, attacker_color):
-        """Determine if square (possibly empty) is attacked by piece with given color
+    def is_attacked(self, sq):
+        """Determine if square (possibly empty) is attacked by enemy piece
+        Enemy is determined by self's side
 
-        would be much more efficient with bitboards
+        (would be much more efficient with bitboards!)
         """
-        # ignore current side to move, generate attacks by attacker_color
-        orig_side = self.side
-        self.side = attacker_color
-        
+        assert sq_valid(sq)
+
+        attacker_color = invert_color(self.side) 
+       
+        # loop through whole board
         for i in range(BOARD_SIZE):
             if not sq_valid(i): continue
 
             if get_color(self.board[i]) == attacker_color:
-                attacks = self.generate_attacks(i)
+                attacks = self.generate_piece_attacks(i)
                 for move in attacks:
                     if move.to == sq:
-                        self.side = orig_side  # restore
                         return True
 
-        self.side = orig_side  # restore
         return False
 
 
@@ -261,7 +287,6 @@ class Position:
 
         IN_BETWEEN = [(F1, G1), (D1, C1, B1), (F8, G8), (D8, C8, B8)]
         KING_COLOR = (WHITE, WHITE, BLACK, BLACK)
-        ENEMY_COLOR = (BLACK, BLACK, WHITE, WHITE)
 
         for i in range(4):
             # only generate moves for side to move
@@ -270,11 +295,11 @@ class Position:
 
             # castling rights
             if self.castling[i]:
-                assert get_type(self.board[KING_SQUARES[i][0]]) == KING
+                assert get_piece_type(self.board[KING_SQUARES[i][0]]) == KING
                 # squares empty
                 if all(self.board[s] == EMPTY for s in IN_BETWEEN[i]):
                     # king not in check
-                    if all(not self.is_attacked(s, ENEMY_COLOR[i]) for s in KING_SQUARES[i]):
+                    if all(not self.is_attacked(s) for s in KING_SQUARES[i]):
                         yield Move(KING_SQUARES[i][0], KING_SQUARES[i][-1], castle=True)
                     
 
@@ -323,7 +348,7 @@ class Position:
 
         # Halfmove clock reset to zero after a capture or pawn move,
         # increment otherwise
-        if move.capture or get_type(piece) == PAWN:
+        if move.capture or get_piece_type(piece) == PAWN:
             self.halfmove = 0
         else:
             self.halfmove += 1
@@ -333,4 +358,4 @@ class Position:
             self.fullmove += 1
 
         # finally, invert side to move
-        self.side = invert(self.side)
+        self.side = invert_color(self.side)

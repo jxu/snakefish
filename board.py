@@ -40,6 +40,8 @@ class Square(IntEnum):
     A7, B7, C7, D7, E7, F7, G7, H7 = range(0x60, 0x68)
     A8, B8, C8, D8, E8, F8, G8, H8 = range(0x70, 0x78)
 
+# Convenience alias
+SQ = Square
 
 class PieceType(IntEnum):
     """Piece TYPE (colorless)"""
@@ -50,6 +52,8 @@ class PieceType(IntEnum):
     ROOK    = 4
     QUEEN   = 5
     KING    = 6
+
+PT = PieceType
 
 class PieceCode(IntEnum):
     """Piece CODE (with color)"""
@@ -68,6 +72,8 @@ class PieceCode(IntEnum):
     BROOK   = -4
     BQUEEN  = -5
     BKING   = -6
+
+PC = PieceCode
 
 
 PIECETYPE_MAP = {
