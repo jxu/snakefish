@@ -59,7 +59,7 @@ class Position:
     def __init__(self, fen: str = START_FEN):
         """Constructs a Position from a given FEN string."""
 
-        self.board = [PT.EMPTY] * 128
+        self.board: list[PieceCode] = [PC.EMPTY] * 128
 
         fen_split = fen.split()
 
@@ -85,13 +85,14 @@ class Position:
                     c = c.upper()  # reduce piece checking cases
 
                     try:
-                        piece = PIECETYPE_MAP[c]
+                        # colored
+                        piece = PieceCode(PIECETYPE_MAP[c])
                     except KeyError:
                         raise ValueError("Unrecognized piece")
 
                     # set negative if black
                     if is_black:
-                        piece = -piece
+                        piece = invert_color(piece)
                     self.board[sq_index(row, col)] = piece
 
                     col += 1

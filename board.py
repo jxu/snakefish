@@ -117,6 +117,12 @@ def invert_color(color: Color) -> Color:
     return Color(-color)
 
 
+def invert_piece(piece_code: PieceCode) -> PieceCode:
+    """Change PieceCode color"""
+    assert get_color(piece_code) != Color.NEUTRAL
+    return PieceCode(-int(PieceCode))
+
+
 def get_piece_type(piece_code: PieceCode) -> PieceType:
     return PieceType(abs(piece_code))
 
